@@ -62,7 +62,6 @@ let readInput path (dim: Dimensions)=
    
     readInputNoTxt data dim
 
-
 // flattens the rows of data into a single layer
 let flattenPixels (data: OriginalLayout) (layer: Layer)  = 
     layer 
@@ -97,39 +96,40 @@ let partOne =
 
     let minLayer = 
         image.layers 
+        // flatten all the layer slices into strings
         |> List.map (fun layer -> flattenPixels image.original layer) 
+        // change to array<Array<char>>
         |> Array.ofSeq 
         |> Array.map (fun x -> Array.ofSeq x) 
+        // group by each number
         |> Array.map  (Array.groupBy id )
+        // sum the counts of each number
         |> Array.map (Array.map (fun (x,y) -> (x, y.Length)))
+        // convert the unorganized strings into records
         |> Array.map convertToRecord
+        // find the smallest layer with zeros
         |> Array.minBy (fun x-> x.zero)
 
     minLayer
 
 
 let partTwo = 
-    let width = 25
-    let height = 6 
-    let dim = {height = 25; width = 6}
+    let dim = {height = 6; width = 25}
     let image: Image = readInput "input.txt" dim
 
-    let minLayer = 
-        image.layers 
-        |> List.map (fun layer -> flattenPixels image.original layer) 
-        |> Array.ofSeq 
-        |> Array.map (fun x -> Array.ofSeq x) 
-        
-
-    let mutable finalPicture = ""
-
-    for i in 0..(width*height) do
-        let value = findPixelType image.original i
-        finalPicture <- finalPicture + value.ToString()
-
-    readInputNoTxt [finalPicture] dim |> printImageLayers |> ignore
+    [|0..(dim.width*dim.height)|] 
+    // recursively find what pixel is not transparent
+    |> Array.map (fun x -> (findPixelType image.original x))
+    // concat all pixels together
+    |> Array.fold (fun (acc: string) (x:int) -> acc + x.ToString()) ""
+    // format the linear string into the height / width dimensions
+    |> fun (x : string) -> readInputNoTxt [x] dim
+    // print the data to console
+    |> printImageLayers 
+    |> ignore
 
 [<EntryPoint>]
 let main argv =
-
+    // partOne |> ignore
+    partTwo |> ignore
     0 // return an integer exit code
